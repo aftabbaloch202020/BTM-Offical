@@ -1,0 +1,6 @@
+{
+  "name": "BTM Official",
+  "description": "Balochistan Trusted Mart Official (BTM) - Trusted Shop • Live Better",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

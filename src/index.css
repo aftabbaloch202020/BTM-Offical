@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-gold-50: #fefdf0;
+  --color-gold-100: #fef9cc;
+  --color-gold-200: #fdf099;
+  --color-gold-300: #fbe05c;
+  --color-gold-400: #f9cc24;
+  --color-gold-500: #d4af37; /* Premium Gold */
+  --color-gold-600: #b8942b;
+  --color-gold-700: #91711e;
+  --color-gold-800: #6a5015;
+  --color-gold-900: #42310b;
+}
+
+/* Base style resets and customizations */
+body {
+  background-color: #030303;
+  color: #f5f5f5;
+  font-family: var(--font-sans);
+}
+
+/* Custom Gold Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4af37;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b8942b;
+}
+
+/* Animate custom spin wheel */
+@keyframes spin-wheel {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(3600deg);
+  }
+}
+
+.spin-animation {
+  animation: spin-wheel 4s cubic-bezier(0.15, 0.85, 0.35, 1) forwards;
+}
+
+/* Premium Card & Glow Effects */
+.gold-glow {
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
+}
+
+.gold-glow-hover:hover {
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
+  border-color: rgba(212, 175, 55, 0.8);
+  transition: all 0.3s ease;
+}
+
+.gold-border {
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.gold-divider {
+  border-color: rgba(212, 175, 55, 0.15);
+}
