@@ -2,7 +2,7 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
-import { createServer as createViteServer } from "vite";
+
 
 const app = express();
 const PORT = 3000;
@@ -1675,17 +1675,21 @@ if (!process.env.VERCEL) {
 
 // Vite & Static file serving setup
 if (process.env.NODE_ENV !== "production") {
-  createViteServer({
-    server: { middlewareMode: true },
-    appType: "spa",
-  }).then((vite) => {
-    app.use(vite.middlewares);
-    
-    if (!process.env.VERCEL) {
-      app.listen(PORT, "0.0.0.0", () => {
-        console.log(`Server running in development on http://localhost:${PORT}`);
-      });
-    }
+  import("vite").then(({ createServer }) => {
+    createServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    }).then((vite) => {
+      app.use(vite.middlewares);
+      
+      if (!process.env.VERCEL) {
+        app.listen(PORT, "0.0.0.0", () => {
+          console.log(`Server running in development on http://localhost:${PORT}`);
+        });
+      }
+    });
+  }).catch((err) => {
+    console.error("Failed to load Vite", err);
   });
 } else {
   const distPath = path.join(process.cwd(), "dist");
