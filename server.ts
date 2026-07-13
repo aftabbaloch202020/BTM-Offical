@@ -4,9 +4,16 @@ import fs from "fs";
 import crypto from "crypto";
 
 
+const IS_SERVERLESS = !!(
+  process.env.VERCEL || 
+  process.env.NETLIFY || 
+  process.env.LAMBDA_TASK_ROOT || 
+  process.env.AWS_EXECUTION_ENV
+);
+
 const app = express();
 const PORT = 3000;
-const DB_FILE = process.env.VERCEL
+const DB_FILE = IS_SERVERLESS
   ? path.join("/tmp", "database.json")
   : path.join(process.cwd(), "database.json");
 
@@ -421,7 +428,7 @@ const INITIAL_LUCKY: LuckyDraw[] = [
 // Read DB helper
 function readDB(): DatabaseSchema {
   try {
-    if (process.env.VERCEL && !fs.existsSync(DB_FILE)) {
+    if (IS_SERVERLESS && !fs.existsSync(DB_FILE)) {
       const origPath = path.join(process.cwd(), "database.json");
       if (fs.existsSync(origPath)) {
         try {
@@ -1668,21 +1675,32 @@ function autoProgressOrders() {
   }
 }
 
-// Start order progression scheduler every 10 seconds if not on Vercel
-if (!process.env.VERCEL) {
+// Global Error Handler Middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error("[GLOBAL ERROR]", err);
+  res.status(500).json({
+    error: "Internal Server Error",
+    message: err instanceof Error ? err.message : String(err),
+    stack: process.env.NODE_ENV !== "production" ? err.stack : undefined
+  });
+});
+
+// Start order progression scheduler every 10 seconds if not in serverless environment
+if (!IS_SERVERLESS) {
   setInterval(autoProgressOrders, 10000);
 }
 
 // Vite & Static file serving setup
 if (process.env.NODE_ENV !== "production") {
-  import("vite").then(({ createServer }) => {
+  const viteModule = "vite";
+  import(viteModule).then(({ createServer }) => {
     createServer({
       server: { middlewareMode: true },
       appType: "spa",
     }).then((vite) => {
       app.use(vite.middlewares);
       
-      if (!process.env.VERCEL) {
+      if (!IS_SERVERLESS) {
         app.listen(PORT, "0.0.0.0", () => {
           console.log(`Server running in development on http://localhost:${PORT}`);
         });
@@ -1698,7 +1716,7 @@ if (process.env.NODE_ENV !== "production") {
     res.sendFile(path.join(distPath, "index.html"));
   });
 
-  if (!process.env.VERCEL) {
+  if (!IS_SERVERLESS) {
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`Server running in production on http://localhost:${PORT}`);
     });
