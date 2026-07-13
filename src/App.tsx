@@ -80,7 +80,13 @@ export default function App() {
   // Global States
   const [currentView, setCurrentView] = useState<'public' | 'admin'>('public');
   const [activePage, setActivePage] = useState<string>('home');
-  const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const [products, setProducts] = useState<Product[]>(() => {
+    const saved = localStorage.getItem('btm_local_products');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return PRODUCTS;
+  });
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [showPreloader, setShowPreloader] = useState(true);
@@ -131,7 +137,13 @@ export default function App() {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
-  const [categories, setCategories] = useState<any[]>(CATEGORIES);
+  const [categories, setCategories] = useState<any[]>(() => {
+    const saved = localStorage.getItem('btm_local_categories');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return CATEGORIES;
+  });
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [activeProduct, setActiveProduct] = useState<Product>(PRODUCTS[0]);
   
@@ -188,6 +200,8 @@ export default function App() {
   });
   const isFirstFetchRef = useRef(true);
   const isFetchingRef = useRef(false);
+  const failureCountRef = useRef(0);
+  const [isLocalMode, setIsLocalMode] = useState(false);
 
   const markNotifsAsSeen = (ids: string[]) => {
     const currentSeen = seenNotifIdsRef.current || [];
@@ -197,13 +211,40 @@ export default function App() {
     setSeenNotifIds(updated);
   };
 
-  const [orders, setOrders] = useState<Order[]>(SEED_ORDERS);
-  const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
-  const [reviews, setReviews] = useState<any[]>(REVIEWS);
-  const [settings, setSettings] = useState<any>({
-    shippingRate: "200",
-    minOrderFreeShipping: "10000",
-    maintenanceMode: false
+  const [orders, setOrders] = useState<Order[]>(() => {
+    const saved = localStorage.getItem('btm_local_orders');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return SEED_ORDERS;
+  });
+
+  const [notifications, setNotifications] = useState<Notification[]>(() => {
+    const saved = localStorage.getItem('btm_local_notifications');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return INITIAL_NOTIFICATIONS;
+  });
+
+  const [reviews, setReviews] = useState<any[]>(() => {
+    const saved = localStorage.getItem('btm_local_reviews');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return REVIEWS;
+  });
+
+  const [settings, setSettings] = useState<any>(() => {
+    const saved = localStorage.getItem('btm_local_settings');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return {
+      shippingRate: "200",
+      minOrderFreeShipping: "10000",
+      maintenanceMode: false
+    };
   });
 
   const [toasts, setToasts] = useState<any[]>([]);
@@ -282,6 +323,9 @@ export default function App() {
         return resNotifs;
       });
 
+      failureCountRef.current = 0;
+      setIsLocalMode(false);
+
       if (isFirstFetchRef.current) {
         // On first load, mark all fetched notifications as seen without showing any toasts
         const allIds = resNotifs.map((n: any) => n.id);
@@ -299,8 +343,12 @@ export default function App() {
           });
         }
       }
-    } catch (err) {
-      console.error("Failed to fetch backend data", err);
+    } catch (err: any) {
+      console.warn("Backend synchronization pending:", err instanceof Error ? err.message : String(err));
+      failureCountRef.current += 1;
+      if (failureCountRef.current >= 2) {
+        setIsLocalMode(true);
+      }
     } finally {
       isFetchingRef.current = false;
       setIsDataLoaded(true);
@@ -309,7 +357,16 @@ export default function App() {
 
   useEffect(() => {
     fetchBackendData();
-    const interval = setInterval(fetchBackendData, 3000);
+    const interval = setInterval(() => {
+      // If we are in local mode (failureCountRef >= 2), only check occasionally to prevent flooding
+      if (failureCountRef.current >= 2) {
+        if (Math.random() < 0.1) {
+          fetchBackendData();
+        }
+      } else {
+        fetchBackendData();
+      }
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -470,6 +527,36 @@ export default function App() {
     const key = user ? `btm_wishlist_ids_${user}` : 'btm_wishlist_ids';
     localStorage.setItem(key, JSON.stringify(wishlistIds));
   }, [wishlistIds]);
+
+  // Synchronize products to localStorage as a local fallback
+  useEffect(() => {
+    localStorage.setItem('btm_local_products', JSON.stringify(products));
+  }, [products]);
+
+  // Synchronize categories to localStorage as a local fallback
+  useEffect(() => {
+    localStorage.setItem('btm_local_categories', JSON.stringify(categories));
+  }, [categories]);
+
+  // Synchronize orders to localStorage as a local fallback
+  useEffect(() => {
+    localStorage.setItem('btm_local_orders', JSON.stringify(orders));
+  }, [orders]);
+
+  // Synchronize reviews to localStorage as a local fallback
+  useEffect(() => {
+    localStorage.setItem('btm_local_reviews', JSON.stringify(reviews));
+  }, [reviews]);
+
+  // Synchronize settings to localStorage as a local fallback
+  useEffect(() => {
+    localStorage.setItem('btm_local_settings', JSON.stringify(settings));
+  }, [settings]);
+
+  // Synchronize notifications to localStorage as a local fallback
+  useEffect(() => {
+    localStorage.setItem('btm_local_notifications', JSON.stringify(notifications));
+  }, [notifications]);
 
   // Synchronize wishlist when logging in or logging out
   useEffect(() => {

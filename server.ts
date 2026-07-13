@@ -6,7 +6,9 @@ import { createServer as createViteServer } from "vite";
 
 const app = express();
 const PORT = 3000;
-const DB_FILE = path.join(process.cwd(), "database.json");
+const DB_FILE = process.env.VERCEL
+  ? path.join("/tmp", "database.json")
+  : path.join(process.cwd(), "database.json");
 
 // Middleware
 app.use(express.json());
@@ -419,6 +421,17 @@ const INITIAL_LUCKY: LuckyDraw[] = [
 // Read DB helper
 function readDB(): DatabaseSchema {
   try {
+    if (process.env.VERCEL && !fs.existsSync(DB_FILE)) {
+      const origPath = path.join(process.cwd(), "database.json");
+      if (fs.existsSync(origPath)) {
+        try {
+          const content = fs.readFileSync(origPath, "utf8");
+          fs.writeFileSync(DB_FILE, content, "utf8");
+        } catch (e) {
+          console.error("Failed to copy database to /tmp", e);
+        }
+      }
+    }
     if (!fs.existsSync(DB_FILE)) {
       const defaultData: DatabaseSchema = {
         products: INITIAL_PRODUCTS,
@@ -1655,8 +1668,10 @@ function autoProgressOrders() {
   }
 }
 
-// Start order progression scheduler every 10 seconds
-setInterval(autoProgressOrders, 10000);
+// Start order progression scheduler every 10 seconds if not on Vercel
+if (!process.env.VERCEL) {
+  setInterval(autoProgressOrders, 10000);
+}
 
 // Vite & Static file serving setup
 if (process.env.NODE_ENV !== "production") {
@@ -1666,9 +1681,11 @@ if (process.env.NODE_ENV !== "production") {
   }).then((vite) => {
     app.use(vite.middlewares);
     
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Server running in development on http://localhost:${PORT}`);
-    });
+    if (!process.env.VERCEL) {
+      app.listen(PORT, "0.0.0.0", () => {
+        console.log(`Server running in development on http://localhost:${PORT}`);
+      });
+    }
   });
 } else {
   const distPath = path.join(process.cwd(), "dist");
@@ -1677,7 +1694,11 @@ if (process.env.NODE_ENV !== "production") {
     res.sendFile(path.join(distPath, "index.html"));
   });
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running in production on http://localhost:${PORT}`);
-  });
+  if (!process.env.VERCEL) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running in production on http://localhost:${PORT}`);
+    });
+  }
 }
+
+export default app;

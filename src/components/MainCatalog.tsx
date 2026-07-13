@@ -221,7 +221,7 @@ export const MainCatalog: React.FC<MainCatalogProps> = ({
                   {/* Image */}
                   <div 
                     onClick={() => onSelectProduct(p)}
-                    className="aspect-square rounded overflow-hidden bg-zinc-950 relative mb-3 cursor-pointer"
+                    className="w-full aspect-square rounded overflow-hidden bg-zinc-950 relative mb-3 cursor-pointer"
                   >
                     <img
                       src={p.image}
@@ -322,7 +322,7 @@ export const MainCatalog: React.FC<MainCatalogProps> = ({
                     {/* Image */}
                     <div 
                       onClick={() => onSelectProduct(p)}
-                      className="aspect-square rounded overflow-hidden bg-zinc-950 relative mb-3 cursor-pointer"
+                      className="w-full aspect-square rounded overflow-hidden bg-zinc-950 relative mb-3 cursor-pointer"
                     >
                       <img
                         src={p.image}
@@ -412,7 +412,7 @@ export const MainCatalog: React.FC<MainCatalogProps> = ({
                     {/* Image */}
                     <div 
                       onClick={() => onSelectProduct(p)}
-                      className="aspect-square rounded overflow-hidden bg-zinc-950 mb-3 cursor-pointer"
+                      className="w-full aspect-square rounded overflow-hidden bg-zinc-950 mb-3 cursor-pointer"
                     >
                       <img
                         src={p.image}
@@ -502,7 +502,7 @@ export const MainCatalog: React.FC<MainCatalogProps> = ({
                     {/* Image */}
                     <div 
                       onClick={() => onSelectProduct(p)}
-                      className="aspect-square rounded overflow-hidden bg-zinc-950 mb-3 cursor-pointer"
+                      className="w-full aspect-square rounded overflow-hidden bg-zinc-950 mb-3 cursor-pointer"
                     >
                       <img
                         src={p.image}
